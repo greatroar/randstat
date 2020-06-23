@@ -22,8 +22,7 @@ func (c *constant) Seed(seed int64)   { c.C = seed }
 
 type std struct{}
 
-var Std *std
-
+func Std() rand.Source       { return (*std)(nil) }
 func (*std) Int63() int64    { return rand.Int63() }
 func (*std) Uint64() uint64  { return rand.Uint64() }
 func (*std) Seed(seed int64) { rand.Seed(seed) }

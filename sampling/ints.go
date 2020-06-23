@@ -30,7 +30,7 @@ import (
 // The time complexity of this function is O(s(1+log(n/s))).
 func Ints(samplesize int, n int64, r rand.Source64, buf []int64) []int64 {
 	if r == nil {
-		r = source.Std
+		r = source.Std()
 	}
 	if int64(samplesize) > n {
 		samplesize = int(n)

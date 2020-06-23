@@ -67,7 +67,6 @@ func TestIntsStats(t *testing.T) {
 	}
 	errNorm = math.Sqrt(errNorm) / float64(len(freq))
 	assert.Less(t, errNorm, .015)
-
 }
 
 func checkSample(t *testing.T, sample []int64, samplesize int, population int64) {
