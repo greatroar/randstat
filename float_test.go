@@ -19,26 +19,29 @@ import (
 	"time"
 
 	"github.com/greatroar/randstat"
+	"github.com/greatroar/randstat/internal/source"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFloat64(t *testing.T) {
-	x := randstat.Float64(constantSource(0))
+	t.Parallel()
+
+	x := randstat.Float64(source.Constant(0))
 	assert.Equal(t, float64(0), x)
 
 	// Smallest float larger than the IEEE machine epsilon.
 	Δ := math.Nextafter(1./(1<<53), 1)
 
-	x = randstat.Float64(constantSource(1<<63 - 1))
+	x = randstat.Float64(source.Constant(1<<63 - 1))
 	assert.Less(t, x, float64(1))
 	assert.InDelta(t, 1, x, Δ)
 
 	r := rand.NewSource(time.Now().UnixNano())
 	for i := 0; i < 10000; i++ {
 		u := r.Int63()
-		x := randstat.Float64(constantSource(u))
-		y := randstat.Float64(constantSource(1 + u))
+		x := randstat.Float64(source.Constant(u))
+		y := randstat.Float64(source.Constant(1 + u))
 		assert.InDelta(t, x, y, Δ)
 	}
 }
