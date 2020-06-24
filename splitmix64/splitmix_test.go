@@ -1,0 +1,154 @@
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package splitmix64_test
+
+import (
+	"math/rand"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/greatroar/randstat/splitmix64"
+
+	"github.com/stretchr/testify/assert"
+)
+
+var _ rand.Source64 = (*splitmix64.Source)(nil)
+
+// These are the first 99 outputs from Java's SplittableRandom.nextInt method
+// with a seed of zero.
+var jdkOutput0 = []int64{
+	-2152535657050944081, 7960286522194355700, 487617019471545679,
+	-537132696929009172, 1961750202426094747, 6038094601263162090,
+	3207296026000306913, -4214222208109204676, 4532161160992623299,
+	-884877559730491226, 7313543279846440201, -4408136866661146890,
+	-8781561602181964933, -8205710985559103185, -5382347917484077799,
+	-8882435919750266709, 9018883062403043925, -4337222557917806714,
+	3775962213208117092, -2874830194785090132, -2665743766357565737,
+	-6268013896294600435, -1299867002884968598, 6073503041918755660,
+	-2487110880056020375, -7827675127045402757, 7617890157137703680,
+	4670970265874846992, -6705686484363746538, -1273923334512494478,
+	-1051217853930060465, 3998411274607395365, 900130614242687664,
+	385107482673595689, -3290877749704669449, 7593930394342328515,
+	4719483656716592003, 4340416312237048737, 7933530951116992991,
+	5740394572501292841, -8868919910796717526, 1391454601869358542,
+	566489329403328680, 1351103705685551415, -3745091539464096712,
+	-1374049360250593737, 4504985774214511021, 7570221628877614665,
+	8594580955025502945, 2500434509708612314, -2027226300370231631,
+	-2367051864990469290, 2348886088387820919, 276553919747734641,
+	-3939869699293853932, -7270661605865613563, 3469464161541295809,
+	-3511529696687057256, -818114867590826410, -4621063917895205745,
+	-1334965252028342917, 6192573367858229616, 4467750364978384669,
+	-2137606495725217541, 3061154374864262414, 5074816255715111235,
+	4771384256668957810, -8319803188529352103, 3673999814881033724,
+	-7034559342120184896, -1258249308830931776, -2665544303555205521,
+	6687255567309957032, -1027739450978789498, -1223483973576604335,
+	-2341307563404572961, 2964889177012845576, -4261196715006488265,
+	-2855526677486414623, 7649363419283438802, -7591534149270104344,
+	5091879769981517896, 4454381521061418420, 4980508477708824225,
+	6261192649386533117, 8898481838737274279, -4145020247049823030,
+	-7886525131440045490, 1961486146552941677, -9185423957884226200,
+	2433881577322458213, -2748098729091122065, -7940580477908286923,
+	8645891477959381875, 412268354897948391, 1366353662778461286,
+	7247738914666652423, -1257582163658545725, -2572574369851497724,
+}
+
+// Expected values for seed 0x1a2b3c4d5e6f7531, from Apache Commons.
+var commonsOutput = []uint64{
+	0x4141302768c9e9d0, 0x64df48c4eab51b1a, 0x4e723b53dbd901b3, 0xead8394409dd6454,
+	0x3ef60e485b412a0a, 0xb2a23aee63aecf38, 0x6cc3b8933c4fa332, 0x9c9e75e031e6fccb,
+	0x0fddffb161c9f30f, 0x2d1d75d4e75c12a3, 0xcdcf9d2dde66da2e, 0x278ba7d1d142cfec,
+	0x4ca423e66072e606, 0x8f2c3c46ebc70bb7, 0xc9def3b1eeae3e21, 0x8e06670cd3e98bce,
+	0x2326dee7dd34747f, 0x3c8fff64392bb3c1, 0xfc6aa1ebe7916578, 0x3191fb6113694e70,
+	0x3453605f6544dac6, 0x86cf93e5cdf81801, 0x0d764d7e59f724df, 0xae1dfb943ebf8659,
+	0x012de1babb3c4104, 0xa5a818b8fc5aa503, 0xb124ea2b701f4993, 0x18e0374933d8c782,
+	0x2af8df668d68ad55, 0x76e56f59daa06243, 0xf58c016f0f01e30f, 0x8eeafa41683dbbf4,
+	0x7bf121347c06677f, 0x4fd0c88d25db5ccb, 0x99af3be9ebe0a272, 0x94f2b33b74d0bdcb,
+	0x24b5d9d7a00a3140, 0x79d983d781a34a3c, 0x582e4a84d595f5ec, 0x7316fe8b0f606d20,
+}
+
+func TestSource(t *testing.T) {
+	var s splitmix64.Source = 0
+	for _, want := range jdkOutput0 {
+		assert.Equal(t, want, int64(s.Uint64()))
+	}
+
+	s.Seed(0x1a2b3c4d5e6f7531)
+	for _, want := range commonsOutput {
+		assert.Equal(t, want, s.Uint64())
+	}
+}
+
+func TestAtomicSource(t *testing.T) {
+	want := make(map[int64]int)
+	for _, x := range jdkOutput0 {
+		want[x]++
+	}
+
+	var (
+		count uint32
+		got   = make(map[int64]int)
+		mu    sync.Mutex
+		s     = splitmix64.Source(0)
+		wg    sync.WaitGroup
+	)
+
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			for int(atomic.AddUint32(&count, 1)) <= len(jdkOutput0) {
+				x := int64(s.Uint64())
+				mu.Lock()
+				got[x]++
+				mu.Unlock()
+			}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+	assert.Equal(t, got, want)
+}
+
+func BenchmarkSource(b *testing.B) {
+	const n = 1 << 20
+	b.SetBytes(8 * n)
+
+	for i := 0; i < b.N; i++ {
+		var r splitmix64.Source
+		r.Seed(int64(b.N))
+
+		for j := 0; j < n; j++ {
+			r.Uint64()
+		}
+	}
+}
+
+func BenchmarkAtomicSource(b *testing.B) {
+	const perRound = 1 << 20
+
+	var r splitmix64.AtomicSource
+	r.Seed(time.Now().UnixNano())
+
+	b.SetBytes(8 * perRound)
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			for j := 0; j < perRound; j++ {
+				r.Uint64()
+			}
+		}
+	})
+}
