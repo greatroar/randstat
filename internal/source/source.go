@@ -16,13 +16,14 @@ import "math/rand"
 
 type constant struct{ C int64 }
 
-func Constant(seed int64) rand.Source { return &constant{C: seed} }
-func (c *constant) Int63() int64      { return int64(c.C) }
-func (c *constant) Seed(seed int64)   { c.C = seed }
+func Constant(seed int64) rand.Source64 { return &constant{C: seed} }
+func (c *constant) Int63() int64        { return c.C }
+func (c *constant) Uint64() uint64      { return uint64(c.C) }
+func (c *constant) Seed(seed int64)     { c.C = seed }
 
 type std struct{}
 
-func Std() rand.Source       { return (*std)(nil) }
+func Std() rand.Source64     { return (*std)(nil) }
 func (*std) Int63() int64    { return rand.Int63() }
 func (*std) Uint64() uint64  { return rand.Uint64() }
 func (*std) Seed(seed int64) { rand.Seed(seed) }
