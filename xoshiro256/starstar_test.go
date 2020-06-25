@@ -13,6 +13,7 @@
 package xoshiro256_test
 
 import (
+	"encoding"
 	"math/rand"
 	"testing"
 
@@ -21,9 +22,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var _ rand.Source64 = (*xoshiro256.Source)(nil)
+var (
+	_ encoding.BinaryMarshaler   = (*xoshiro256.Source)(nil)
+	_ encoding.BinaryUnmarshaler = (*xoshiro256.Source)(nil)
+	_ rand.Source64              = (*xoshiro256.Source)(nil)
+)
 
 func TestSource(t *testing.T) {
+	t.Parallel()
+
 	var s xoshiro256.Source
 
 	for _, c := range []struct {
@@ -72,6 +79,30 @@ func TestSource(t *testing.T) {
 			assert.Equal(t, v, s.Uint64(), "seed = 0x%08x, value %d", c.seed, i)
 		}
 	}
+}
+
+func TestMarshal(t *testing.T) {
+	t.Parallel()
+
+	for i := 0; i < 100; i++ {
+		s := xoshiro256.New(uint64(i))
+
+		marshaled, err := s.MarshalBinary()
+		assert.Nil(t, err)
+
+		expect := s.Uint64()
+		err = s.UnmarshalBinary(marshaled)
+		assert.Nil(t, err)
+
+		actual := s.Uint64()
+		assert.Equal(t, expect, actual)
+	}
+
+	var s xoshiro256.Source
+	err := s.UnmarshalBinary(nil)
+	assert.NotNil(t, err)
+	err = s.UnmarshalBinary(make([]byte, 6*8))
+	assert.NotNil(t, err)
 }
 
 func BenchmarkSourceInt63(b *testing.B) {

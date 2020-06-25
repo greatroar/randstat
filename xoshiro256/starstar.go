@@ -24,6 +24,8 @@
 package xoshiro256
 
 import (
+	"encoding/binary"
+	"errors"
 	"math/bits"
 
 	"github.com/greatroar/randstat/splitmix64"
@@ -80,4 +82,41 @@ func (s *Source) Uint64() uint64 {
 	st[3] = bits.RotateLeft64(st[3], 45)
 
 	return r
+}
+
+const (
+	header      = "xoshiro256**1.0\x00"
+	marshalSize = len(header) + 4*8
+)
+
+// MarshalBinary encodes s in a binary format for serialization.
+//
+// The format starts with a 16-byte header, followed by the four 64-bit
+// integers of state in little-endian format.
+//
+// The returned error is always nil.
+func (s *Source) MarshalBinary() (data []byte, err error) {
+	data = make([]byte, marshalSize)
+	copy(data, header)
+	for i, x := range s.s {
+		binary.LittleEndian.PutUint64(data[len(header)+8*i:], x)
+	}
+	return
+}
+
+// UnmarshalBinary decodes s from the binary format used by MarshalBinary.
+func (s *Source) UnmarshalBinary(data []byte) error {
+	switch {
+	case len(data) != marshalSize:
+		return errors.New("unmarshal xoshiro256: incorrect data length")
+	case string(data[:len(header)]) != header:
+		return errors.New("unmarshal xoshiro256: incorrect header")
+	}
+
+	data = data[len(header):]
+	for i := range s.s {
+		s.s[i] = binary.LittleEndian.Uint64(data)
+		data = data[8:]
+	}
+	return nil
 }
