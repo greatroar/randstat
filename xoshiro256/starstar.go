@@ -46,6 +46,29 @@ func New(seed uint64) *Source {
 // Int63 returns a non-negative pseudo-random 63-bit integer as an int64.
 func (s *Source) Int63() int64 { return int64(s.Uint64() >> 1) }
 
+// Jump advances the Source by 2^128 positions.
+func (s *Source) Jump() {
+	jump := [...]uint64{
+		0x180ec6d33cfd0aba, 0xd5a61266f0c9392c,
+		0xa9582618e03fc9aa, 0x39abdc4529b1661c}
+
+	var s0, s1, s2, s3 uint64
+
+	for i := 0; i < len(jump); i++ {
+		for b := byte(0); b < 64; b++ {
+			if jump[i]&(1<<b) != 0 {
+				s0 ^= s.s[0]
+				s1 ^= s.s[1]
+				s2 ^= s.s[2]
+				s3 ^= s.s[3]
+			}
+			s.Uint64()
+		}
+	}
+
+	s.s = [4]uint64{s0, s1, s2, s3}
+}
+
 // Seed uses the provided seed value to initialize the generator to a
 // deterministic state.
 //

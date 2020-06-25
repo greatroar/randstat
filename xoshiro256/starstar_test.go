@@ -81,6 +81,37 @@ func TestSource(t *testing.T) {
 	}
 }
 
+func TestJump(t *testing.T) {
+	t.Parallel()
+
+	var s xoshiro256.Source
+
+	for _, c := range []struct {
+		seed uint64
+		r    [3]uint64 // First Uint64 after Seed + 1, 2 or 3 Jumps.
+	}{
+		{seed: 0x00000028,
+			r: [...]uint64{
+				0x770dd1921a5e3d37, 0xbebedc9daec6215b, 0x1edf3513dbbd1cd9}},
+
+		{seed: 0x00abac0d,
+			r: [...]uint64{
+				0x1db7e88f4273b557, 0xf51555002eb0703f, 0x142cd075a924dbbf}},
+
+		{seed: 0x182321e30c3,
+			r: [...]uint64{
+				0x7ae028f7f6f80753, 0x5e8c563300b2dde1, 0x3a40cd7a03b31deb}},
+	} {
+		for njumps, x := range c.r {
+			s.Seed(int64(c.seed))
+			for i := 0; i <= njumps; i++ {
+				s.Jump()
+			}
+			assert.Equal(t, x, s.Uint64())
+		}
+	}
+}
+
 func TestMarshal(t *testing.T) {
 	t.Parallel()
 
