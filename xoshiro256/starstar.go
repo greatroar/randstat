@@ -67,7 +67,7 @@ retry:
 
 // Uint64 returns a pseudo-random 64-bit value as a uint64.
 func (s *Source) Uint64() uint64 {
-	st := s.s
+	st := &s.s
 	r := bits.RotateLeft64(5*st[1], 7) * 9
 
 	t := st[1] << 17
@@ -79,6 +79,5 @@ func (s *Source) Uint64() uint64 {
 
 	st[3] = bits.RotateLeft64(st[3], 45)
 
-	s.s = st
 	return r
 }

@@ -73,3 +73,33 @@ func TestSource(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkSourceInt63(b *testing.B) {
+	var r xoshiro256.Source
+	r.Seed(0)
+	b.SetBytes(8)
+
+	for i := 0; i < b.N; i++ {
+		r.Int63()
+	}
+}
+
+func BenchmarkSourceUint64(b *testing.B) {
+	var r xoshiro256.Source
+	r.Seed(0)
+	b.SetBytes(8)
+
+	for i := 0; i < b.N; i++ {
+		r.Uint64()
+	}
+}
+
+func BenchmarkRandSourceUint64(b *testing.B) {
+	var r rand.Source64 = xoshiro256.New(0)
+	b.SetBytes(8)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		r.Uint64()
+	}
+}
