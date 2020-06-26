@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInts(t *testing.T) {
+func TestInts64(t *testing.T) {
 	t.Parallel()
 
 	var sample []int64
@@ -33,7 +33,7 @@ func TestInts(t *testing.T) {
 		for _, population := range []int64{1, 2, 5, 123, 1007, 9999999} {
 			name := fmt.Sprintf("%d %d", samplesize, population)
 			t.Run(name, func(t *testing.T) {
-				sample := sampling.Ints(samplesize, population, nil, sample[:0])
+				sample := sampling.Ints64(samplesize, population, nil, sample[:0])
 				checkSample(t, sample, samplesize, population)
 			})
 		}
@@ -41,7 +41,7 @@ func TestInts(t *testing.T) {
 }
 
 // Quick statistical test.
-func TestIntsStats(t *testing.T) {
+func TestInts64Stats(t *testing.T) {
 	t.Parallel()
 
 	const (
@@ -54,7 +54,7 @@ func TestIntsStats(t *testing.T) {
 	r := rand.NewSource(0x52109).(rand.Source64)
 
 	for i := 0; i < population*samplesize; i++ {
-		sample = sampling.Ints(samplesize, population, r, sample[:0])
+		sample = sampling.Ints64(samplesize, population, r, sample[:0])
 		for _, x := range sample {
 			freq[x]++
 		}
@@ -87,19 +87,19 @@ func checkSample(t *testing.T, sample []int64, samplesize int, population int64)
 	assert.Equal(samplesize, len(set))
 }
 
-func benchmarkInts(b *testing.B, s int, n int64) {
+func benchmarkInts64(b *testing.B, s int, n int64) {
 	sample := make([]int64, s)
 	r := rand.NewSource(time.Now().UnixNano()).(rand.Source64)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		sample = sampling.Ints(s, n, r, sample)
+		sample = sampling.Ints64(s, n, r, sample)
 	}
 }
 
-func BenchmarkInts10_1e5(b *testing.B)   { benchmarkInts(b, 10, 1e5) }
-func BenchmarkInts10_1e6(b *testing.B)   { benchmarkInts(b, 10, 1e6) }
-func BenchmarkInts100_1e6(b *testing.B)  { benchmarkInts(b, 100, 1e6) }
-func BenchmarkInts1000_1e6(b *testing.B) { benchmarkInts(b, 1000, 1e6) }
-func BenchmarkInts1000_1e7(b *testing.B) { benchmarkInts(b, 1000, 1e7) }
+func BenchmarkInts64_10_1e5(b *testing.B)   { benchmarkInts64(b, 10, 1e5) }
+func BenchmarkInts64_10_1e6(b *testing.B)   { benchmarkInts64(b, 10, 1e6) }
+func BenchmarkInts64_100_1e6(b *testing.B)  { benchmarkInts64(b, 100, 1e6) }
+func BenchmarkInts64_1000_1e6(b *testing.B) { benchmarkInts64(b, 1000, 1e6) }
+func BenchmarkInts64_1000_1e7(b *testing.B) { benchmarkInts64(b, 1000, 1e7) }

@@ -17,20 +17,21 @@ import (
 	"math/rand"
 
 	"github.com/greatroar/randstat"
-	"github.com/greatroar/randstat/internal/source"
+	"github.com/greatroar/randstat/xoshiro256"
 )
 
-// Ints appends to buf a simple random sample of the integers [0,n)
+// Ints64 appends to buf a simple random sample of the integers [0,n)
 // and returns the resulting slice. The sample is not sorted.
 //
-// Random numbers are taken from r, or math.rand's global RNG if r is nil.
+// Random numbers are taken from r, or from an internal generator bootstrapped
+// from math.rand's global generator if r is nil.
 //
 // If samplesize > n, the sample will be of size n instead.
 //
 // The time complexity of this function is O(s(1+log(n/s))).
-func Ints(samplesize int, n int64, r rand.Source64, buf []int64) []int64 {
+func Ints64(samplesize int, n int64, r rand.Source, buf []int64) []int64 {
 	if r == nil {
-		r = source.Std()
+		r = xoshiro256.New(rand.Uint64())
 	}
 	if int64(samplesize) > n {
 		samplesize = int(n)
