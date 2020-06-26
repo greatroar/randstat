@@ -10,11 +10,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package randstat provides replacements for math/rand functions and methods.
-//
-// The functions in this package are designed to be faster than their
-// counterparts in math/rand, and consume (in expectation) fewer random numbers
-// from their Source.
 package randstat
 
 import "math/rand"
