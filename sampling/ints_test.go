@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"reflect"
 	"testing"
 	"time"
 
@@ -24,20 +25,54 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInts64(t *testing.T) {
-	t.Parallel()
-
-	var sample []int64
+func testInts(t *testing.T, ints func(int, int64, rand.Source64) []int64) {
+	t.Helper()
 
 	for _, samplesize := range []int{1, 2, 3, 19, 10000} {
 		for _, population := range []int64{1, 2, 5, 123, 1007, 9999999} {
 			name := fmt.Sprintf("%d %d", samplesize, population)
 			t.Run(name, func(t *testing.T) {
-				sample := sampling.Ints64(samplesize, population, nil, sample[:0])
+				sample := ints(samplesize, population, nil)
 				checkSample(t, sample, samplesize, population)
 			})
 		}
 	}
+}
+
+func toInt64(slice interface{}) []int64 {
+	v := reflect.ValueOf(slice)
+	out := make([]int64, 0, v.Len())
+
+	for i := 0; i < v.Len(); i++ {
+		out = append(out, v.Index(i).Int())
+	}
+	return out
+}
+
+func TestInts32(t *testing.T) {
+	t.Parallel()
+
+	testInts(t, func(k int, n int64, r rand.Source64) []int64 {
+		s := sampling.Ints32(k, int32(n), r, nil)
+		return toInt64(s)
+	})
+}
+
+func TestInts(t *testing.T) {
+	t.Parallel()
+
+	testInts(t, func(k int, n int64, r rand.Source64) []int64 {
+		s := sampling.Ints(k, int(n), r, nil)
+		return toInt64(s)
+	})
+}
+
+func TestInts64(t *testing.T) {
+	t.Parallel()
+
+	testInts(t, func(k int, n int64, r rand.Source64) []int64 {
+		return sampling.Ints64(k, n, r, nil)
+	})
 }
 
 // Quick statistical test.
@@ -67,6 +102,23 @@ func TestInts64Stats(t *testing.T) {
 	}
 	errNorm = math.Sqrt(errNorm) / float64(len(freq))
 	assert.Less(t, errNorm, .015)
+}
+
+func TestIntsZero(t *testing.T) {
+	buf := make([]int, 4)
+	sample := sampling.Ints(0, 0xffff, nil, buf)
+	assert.Equal(t, buf, sample)
+	assert.Same(t, &buf[0], &sample[0])
+
+	buf32 := make([]int32, 4)
+	sample32 := sampling.Ints32(0, 0xfffffff, nil, buf32)
+	assert.Equal(t, buf32, sample32)
+	assert.Same(t, &buf32[0], &sample32[0])
+
+	buf64 := make([]int64, 4)
+	sample64 := sampling.Ints64(0, 0xfffffff, nil, buf64)
+	assert.Equal(t, buf64, sample64)
+	assert.Same(t, &buf64[0], &sample64[0])
 }
 
 func checkSample(t *testing.T, sample []int64, samplesize int, population int64) {

@@ -10,15 +10,59 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate go run generate_ints.go -o zints.go
+
 package sampling
 
 import (
-	"math"
 	"math/rand"
 
 	"github.com/greatroar/randstat"
 	"github.com/greatroar/randstat/xoshiro256"
 )
+
+const maxint32 = 1<<31 - 1
+
+// Ints appends to buf a simple random sample of the integers [0,n)
+// and returns the resulting slice. The sample is not sorted.
+//
+// Random numbers are taken from r, or from an internal generator bootstrapped
+// from math.rand's global generator if r is nil.
+//
+// If samplesize > n, the sample will be of size n instead.
+//
+// The time complexity of this function is O(s(1+log(n/s))).
+func Ints(samplesize, n int, r rand.Source64, buf []int) []int {
+	r = maybeXoshiro(r)
+	if samplesize > n {
+		samplesize = n
+	}
+
+	if n <= maxint32 {
+		return ints31_int(samplesize, int32(n), r, buf)
+	} else {
+		return ints63_int(samplesize, int64(n), r, buf)
+	}
+}
+
+// Ints32 appends to buf a simple random sample of the integers [0,n)
+// and returns the resulting slice. The sample is not sorted.
+//
+// Random numbers are taken from r, or from an internal generator bootstrapped
+// from math.rand's global generator if r is nil.
+//
+// If samplesize > n, the sample will be of size n instead.
+//
+// The time complexity of this function is O(s(1+log(n/s))).
+func Ints32(samplesize int, n int32, r rand.Source, buf []int32) []int32 {
+	if r == nil {
+		r = xoshiro256.New(rand.Uint64())
+	}
+	if samplesize > int(n) {
+		samplesize = int(n)
+	}
+	return ints31_int32(samplesize, n, r, buf)
+}
 
 // Ints64 appends to buf a simple random sample of the integers [0,n)
 // and returns the resulting slice. The sample is not sorted.
@@ -29,42 +73,24 @@ import (
 // If samplesize > n, the sample will be of size n instead.
 //
 // The time complexity of this function is O(s(1+log(n/s))).
-func Ints64(samplesize int, n int64, r rand.Source, buf []int64) []int64 {
-	if r == nil {
-		r = xoshiro256.New(rand.Uint64())
-	}
+func Ints64(samplesize int, n int64, r rand.Source64, buf []int64) []int64 {
+	r = maybeXoshiro(r)
 	if int64(samplesize) > n {
 		samplesize = int(n)
 	}
-	if samplesize == 0 {
-		return buf
-	}
 
-	// Algorithm L from Li 1994, Reservoir-Sampling Algorithms of Time
-	// Complexity O(n(1+log(N/n))), ACM TOMS,
-	// https://doi.org/10.1145%2F198429.198435
-	for i := 0; i < samplesize; i++ {
-		buf = append(buf, int64(i))
+	if n <= maxint32 {
+		return ints31_int64(samplesize, int32(n), r, buf)
+	} else {
+		return ints63_int64(samplesize, n, r, buf)
 	}
-	sample := buf[len(buf)-samplesize:]
+}
 
-	var (
-		w = float64(1)
-		i = float64(samplesize)
-		k = float64(samplesize)
-		N = float64(n)
-	)
-	for {
-		w *= math.Exp(math.Log(random01(r)) / k)
-		i += 1 + math.Floor(math.Log(random01(r))/math.Log1p(-w))
-		if i >= N {
-			break
-		}
-		j := randstat.Intn(r, len(sample))
-		sample[j] = int64(i)
+func maybeXoshiro(r rand.Source64) rand.Source64 {
+	if r == nil {
+		r = xoshiro256.New(rand.Uint64())
 	}
-
-	return buf
+	return r
 }
 
 // random01 returns a random float64 in (0,1).
