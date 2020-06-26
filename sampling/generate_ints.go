@@ -104,11 +104,11 @@ func ints{{.Bits}}_{{.Out}}(samplesize int, n {{.Type}}, r rand.Source{{.SrcBits
 	var (
 		w = float64(1)
 		i = float64(samplesize)
-		k = float64(samplesize)
+		k = 1 / float64(samplesize)
 		N = float64(n)
 	)
 	for {
-		w *= math.Exp(math.Log(random01(r)) / k)
+		w *= math.Exp(math.Log(random01(r)) * k)
 		i += 1 + math.Floor(math.Log(random01(r))/math.Log1p(-w))
 		if i >= N {
 			break

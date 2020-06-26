@@ -39,11 +39,11 @@ func ints31_int(samplesize int, n int32, r rand.Source64, buf []int) []int {
 	var (
 		w = float64(1)
 		i = float64(samplesize)
-		k = float64(samplesize)
+		k = 1 / float64(samplesize)
 		N = float64(n)
 	)
 	for {
-		w *= math.Exp(math.Log(random01(r)) / k)
+		w *= math.Exp(math.Log(random01(r)) * k)
 		i += 1 + math.Floor(math.Log(random01(r))/math.Log1p(-w))
 		if i >= N {
 			break
@@ -68,11 +68,11 @@ func ints63_int(samplesize int, n int64, r rand.Source64, buf []int) []int {
 	var (
 		w = float64(1)
 		i = float64(samplesize)
-		k = float64(samplesize)
+		k = 1 / float64(samplesize)
 		N = float64(n)
 	)
 	for {
-		w *= math.Exp(math.Log(random01(r)) / k)
+		w *= math.Exp(math.Log(random01(r)) * k)
 		i += 1 + math.Floor(math.Log(random01(r))/math.Log1p(-w))
 		if i >= N {
 			break
@@ -97,11 +97,11 @@ func ints31_int32(samplesize int, n int32, r rand.Source, buf []int32) []int32 {
 	var (
 		w = float64(1)
 		i = float64(samplesize)
-		k = float64(samplesize)
+		k = 1 / float64(samplesize)
 		N = float64(n)
 	)
 	for {
-		w *= math.Exp(math.Log(random01(r)) / k)
+		w *= math.Exp(math.Log(random01(r)) * k)
 		i += 1 + math.Floor(math.Log(random01(r))/math.Log1p(-w))
 		if i >= N {
 			break
@@ -126,11 +126,11 @@ func ints31_int64(samplesize int, n int32, r rand.Source, buf []int64) []int64 {
 	var (
 		w = float64(1)
 		i = float64(samplesize)
-		k = float64(samplesize)
+		k = 1 / float64(samplesize)
 		N = float64(n)
 	)
 	for {
-		w *= math.Exp(math.Log(random01(r)) / k)
+		w *= math.Exp(math.Log(random01(r)) * k)
 		i += 1 + math.Floor(math.Log(random01(r))/math.Log1p(-w))
 		if i >= N {
 			break
@@ -155,11 +155,11 @@ func ints63_int64(samplesize int, n int64, r rand.Source64, buf []int64) []int64
 	var (
 		w = float64(1)
 		i = float64(samplesize)
-		k = float64(samplesize)
+		k = 1 / float64(samplesize)
 		N = float64(n)
 	)
 	for {
-		w *= math.Exp(math.Log(random01(r)) / k)
+		w *= math.Exp(math.Log(random01(r)) * k)
 		i += 1 + math.Floor(math.Log(random01(r))/math.Log1p(-w))
 		if i >= N {
 			break
