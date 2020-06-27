@@ -46,11 +46,6 @@ func TestFloat64(t *testing.T) {
 	}
 }
 
-type constantSource int64
-
-func (constantSource) Seed(int64)     { panic("not implemented") }
-func (i constantSource) Int63() int64 { return int64(i) }
-
 func BenchmarkFloat64Std(b *testing.B) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
