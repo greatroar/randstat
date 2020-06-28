@@ -33,10 +33,17 @@ import (
 
 // A Source is a xoshiro256** 1.0 random number generator.
 //
-// A Source must be seeded (with the Seed method) before use.
-type Source struct{ s [4]uint64 }
+// The zero Source is not usable; it produces a stream of zeros.
+//
+// Note that Sources constructed by New or initialized with Seed can
+// produce 2^64 distinct streams of random numbers.
+// The state S is public for applications that need more.
+type Source struct {
+	S [4]uint64 // Generator state (256 bits).
+}
 
 // New returns a Source initialized with the given seed.
+// It is equivalent to allocating a Source and calling Seed on it.
 func New(seed uint64) *Source {
 	s := &Source{}
 	s.Seed(int64(seed))
@@ -57,20 +64,21 @@ func (s *Source) Jump() {
 	for i := 0; i < len(jump); i++ {
 		for b := byte(0); b < 64; b++ {
 			if jump[i]&(1<<b) != 0 {
-				s0 ^= s.s[0]
-				s1 ^= s.s[1]
-				s2 ^= s.s[2]
-				s3 ^= s.s[3]
+				s0 ^= s.S[0]
+				s1 ^= s.S[1]
+				s2 ^= s.S[2]
+				s3 ^= s.S[3]
 			}
 			s.Uint64()
 		}
 	}
 
-	s.s = [4]uint64{s0, s1, s2, s3}
+	s.S = [4]uint64{s0, s1, s2, s3}
 }
 
 // Seed uses the provided seed value to initialize the generator to a
 // deterministic state.
+// The seed value may be any 64-bit integer.
 //
 // It uses a SplitMix64 generator to turn seed into four non-zero
 // pseudo-random numbers.
@@ -87,12 +95,12 @@ retry:
 		goto retry
 	}
 
-	s.s = [4]uint64{s0, s1, s2, s3}
+	s.S = [4]uint64{s0, s1, s2, s3}
 }
 
 // Uint64 returns a pseudo-random 64-bit value as a uint64.
 func (s *Source) Uint64() uint64 {
-	st := &s.s
+	st := &s.S
 	r := bits.RotateLeft64(5*st[1], 7) * 9
 
 	t := st[1] << 17
@@ -121,7 +129,7 @@ const (
 func (s *Source) MarshalBinary() (data []byte, err error) {
 	data = make([]byte, marshalSize)
 	copy(data, header)
-	for i, x := range s.s {
+	for i, x := range s.S {
 		binary.LittleEndian.PutUint64(data[len(header)+8*i:], x)
 	}
 	return
@@ -137,8 +145,8 @@ func (s *Source) UnmarshalBinary(data []byte) error {
 	}
 
 	data = data[len(header):]
-	for i := range s.s {
-		s.s[i] = binary.LittleEndian.Uint64(data)
+	for i := range s.S {
+		s.S[i] = binary.LittleEndian.Uint64(data)
 		data = data[8:]
 	}
 	return nil
