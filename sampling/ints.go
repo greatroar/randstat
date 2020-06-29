@@ -17,7 +17,6 @@ package sampling
 import (
 	"math/rand"
 
-	"github.com/greatroar/randstat"
 	"github.com/greatroar/randstat/xoshiro256"
 )
 
@@ -84,22 +83,4 @@ func Ints64(samplesize int, n int64, r rand.Source64, buf []int64) []int64 {
 	} else {
 		return ints63_int64(samplesize, n, r, buf)
 	}
-}
-
-func maybeXoshiro(r rand.Source64) rand.Source64 {
-	if r == nil {
-		r = xoshiro256.New(rand.Uint64())
-	}
-	return r
-}
-
-// random01 returns a random float64 in (0,1).
-func random01(r rand.Source) float64 {
-	// Go 1.14 will not inline the obvious loop, but it will inline this.
-retry:
-	x := randstat.Float64(r)
-	if x == 0 {
-		goto retry
-	}
-	return x
 }
