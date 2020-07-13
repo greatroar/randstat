@@ -1,1 +1,4 @@
 A small Go library of randomness and statistics utilities.
+
+If you were looking for probability distributions, check out
+https://github.com/aclements/go-moremath instead.
