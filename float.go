@@ -14,8 +14,7 @@ package randstat
 
 import "math/rand"
 
-// In Go 1.13, we could write 0x1p-53.
-const machineEpsilon = 1. / (1. << 53)
+const machineEpsilon = 0x1p-53
 
 // Float64 returns a pseudo-random number in the interval [0,1),
 // given a uniformly random integer.

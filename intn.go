@@ -12,7 +12,10 @@
 
 package randstat
 
-import "math/rand"
+import (
+	"math/bits"
+	"math/rand"
+)
 
 const (
 	maxint32  = 1<<31 - 1
@@ -67,11 +70,11 @@ func Int63n(r rand.Source64, n int64) int64 {
 	// See comment in Int31n.
 	u := uint64(n)
 
-	hi, lo := mul64(uint64(r.Uint64()), uint64(n))
+	hi, lo := bits.Mul64(uint64(r.Uint64()), uint64(n))
 	if lo < u {
 		thresh := (-u) % u
 		for lo < thresh {
-			hi, lo = mul64(uint64(r.Uint64()), u)
+			hi, lo = bits.Mul64(uint64(r.Uint64()), u)
 		}
 	}
 
